@@ -58,8 +58,8 @@ export interface ApiError {
 // Configuration
 // ================================
 
-const OLLAMA_BASE_URL = "http://localhost:11434";
-const DEFAULT_MODEL = "mistral";
+const OLLAMA_BASE_URL = import.meta.env.VITE_OLLAMA_URL || "http://localhost:11434";
+const DEFAULT_MODEL = import.meta.env.VITE_DEFAULT_MODEL || "mistral";
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 

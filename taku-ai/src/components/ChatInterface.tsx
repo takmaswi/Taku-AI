@@ -1,48 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ChatMessagesList } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { DocumentUpload } from './DocumentUpload';
 import { Message, Document } from '@/lib/types';
-import { queryOllama, checkOllamaStatus } from '@/lib/ollama';
-import { AlertCircle, Wifi } from 'lucide-react';
+import {
+    sendChatMessage,
+    checkOllamaHealth,
+    createUserMessage,
+    createAssistantMessage
+} from '@/lib/api';
+import { handleApiError } from '@/lib/api-helpers';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { AlertCircle, Wifi, Trash2, Plus } from 'lucide-react';
 
 export const ChatInterface: React.FC = () => {
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [documents, setDocuments] = useState<Document[]>([]);
+    const [messages, setMessages] = useLocalStorage<Message[]>('taku_messages', []);
+    const [documents, setDocuments] = useLocalStorage<Document[]>('taku_documents', []);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [ollamaReady, setOllamaReady] = useState(false);
 
     useEffect(() => {
-        checkOllamaStatus().then(setOllamaReady).catch(() => setOllamaReady(false));
+        checkOllamaHealth()
+            .then((isHealthy) => {
+                setOllamaReady(isHealthy);
+                if (!isHealthy) {
+                    setError('⚠️ Ollama is not running. Start it with: ollama serve');
+                }
+            })
+            .catch((err) => {
+                console.error('Failed to check Ollama health:', err);
+                setOllamaReady(false);
+                setError('Could not connect to Ollama. Is it running on localhost:11434?');
+            });
     }, []);
 
     const handleSendMessage = async (content: string) => {
-        const userMessage: Message = {
-            id: `user-${Date.now()}`,
-            role: 'user',
-            content,
-            timestamp: new Date(),
-        };
+        if (!content.trim()) {
+            setError('Please enter a message');
+            return;
+        }
 
+        const userMessage = createUserMessage(content);
         setMessages((prev) => [...prev, userMessage]);
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await queryOllama(content);
-            const assistantMessage: Message = {
-                id: `assistant-${Date.now()}`,
-                role: 'assistant',
-                content: response,
-                timestamp: new Date(),
-            };
+            const response = await sendChatMessage(content);
+
+            const assistantMessage = createAssistantMessage(
+                response.response,
+                false,
+                []
+            );
             setMessages((prev) => [...prev, assistantMessage]);
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-            setError(errorMessage);
+            const friendlyError = handleApiError(err);
+            setError(`❌ ${friendlyError.message}\n\n💡 Suggestion: ${friendlyError.suggestion}`);
+            console.error('Failed to get response:', err);
         } finally {
             setIsLoading(false);
         }
@@ -59,10 +76,33 @@ export const ChatInterface: React.FC = () => {
         setDocuments((prev) => [...prev, newDocument]);
     };
 
+    const handleClearHistory = () => {
+        if (messages.length === 0) {
+            setError('No messages to clear');
+            return;
+        }
+        if (confirm('Clear all messages? This cannot be undone.')) {
+            setMessages([]);
+            setDocuments([]);
+            setError(null);
+        }
+    };
+
+    const handleNewChat = () => {
+        if (messages.length === 0) {
+            setError('Already in a new chat');
+            return;
+        }
+        if (confirm('Start a new conversation? Current messages will be saved in history.')) {
+            setMessages([]);
+            setError(null);
+        }
+    };
+
     return (
         <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-900">
             {/* Sidebar */}
-            <div className="w-80 border-r border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+            <div className="w-80 border-r border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 overflow-y-auto">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                         TAKU AI
@@ -73,6 +113,27 @@ export const ChatInterface: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
+                    {/* Action buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleNewChat}
+                            disabled={isLoading}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white font-medium hover:bg-blue-600 disabled:opacity-50"
+                        >
+                            <Plus className="h-4 w-4" />
+                            New Chat
+                        </button>
+                        <button
+                            onClick={handleClearHistory}
+                            disabled={isLoading || messages.length === 0}
+                            className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-red-700 font-medium hover:bg-red-200 disabled:opacity-50"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Clear
+                        </button>
+                    </div>
+
+                    {/* Document upload */}
                     <DocumentUpload
                         documents={documents}
                         onFileSelect={handleFileSelect}
@@ -83,7 +144,7 @@ export const ChatInterface: React.FC = () => {
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                Ollama is not connected. Check that it's running on localhost:11434
+                                Ollama not connected. Run: <code className="text-xs bg-red-900/20 px-1 rounded">ollama serve</code>
                             </AlertDescription>
                         </Alert>
                     )}
@@ -94,6 +155,11 @@ export const ChatInterface: React.FC = () => {
                             Mistral Ready
                         </div>
                     )}
+
+                    {/* Message count */}
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {messages.length} message{messages.length !== 1 ? 's' : ''}
+                    </div>
                 </div>
             </div>
 
@@ -106,7 +172,9 @@ export const ChatInterface: React.FC = () => {
                 {error && (
                     <Alert variant="destructive" className="m-4">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription className="whitespace-pre-wrap">
+                            {error}
+                        </AlertDescription>
                     </Alert>
                 )}
 

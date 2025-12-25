@@ -9,6 +9,12 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     const isUser = message.role === 'user';
 
+    // Handle both Date objects and string timestamps from localStorage
+    const formatTimestamp = (timestamp: Date | string): string => {
+        const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
         <div
             className={`flex w-full gap-3 px-4 py-3 ${isUser ? 'justify-end' : 'justify-start'
@@ -16,13 +22,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         >
             <div
                 className={`max-w-[70%] rounded-lg p-3 ${isUser
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
                     }`}
             >
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 <span className="mt-1 block text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString()}
+                    {formatTimestamp(message.timestamp)}
                 </span>
             </div>
         </div>
