@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius: 0.75rem;
+
+  /* Premium Violet-Blue Accent Theme (OKLCH) */
+  --color-background: oklch(0.99 0 0);
+  --color-foreground: oklch(0.1 0 0);
+
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.1 0 0);
+
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.1 0 0);
+
+  --color-primary: oklch(0.55 0.2 265);
+  --color-primary-foreground: oklch(0.99 0 0);
+
+  --color-secondary: oklch(0.97 0.01 265);
+  --color-secondary-foreground: oklch(0.2 0 0);
+
+  --color-muted: oklch(0.97 0.005 265);
+  --color-muted-foreground: oklch(0.45 0 0);
+
+  --color-accent: oklch(0.95 0.02 265);
+  --color-accent-foreground: oklch(0.2 0 0);
+
+  --color-destructive: oklch(0.6 0.25 25);
+  --color-destructive-foreground: oklch(0.98 0 0);
+
+  --color-border: oklch(0.92 0.01 265);
+  --color-input: oklch(0.94 0.01 265);
+  --color-ring: oklch(0.55 0.2 265);
+
+  --color-chart-1: oklch(0.55 0.2 265);
+  --color-chart-2: oklch(0.6 0.18 220);
+  --color-chart-3: oklch(0.65 0.15 180);
+  --color-chart-4: oklch(0.7 0.12 140);
+  --color-chart-5: oklch(0.75 0.1 100);
+
+  /* Sidebar (Standard Shadcn Naming) */
+  --color-sidebar: oklch(0.99 0.005 265);
+  --color-sidebar-foreground: oklch(0.1 0 0);
+  --color-sidebar-primary: oklch(0.55 0.2 265);
+  --color-sidebar-primary-foreground: oklch(0.99 0 0);
+  --color-sidebar-accent: oklch(0.95 0.02 265);
+  --color-sidebar-accent-foreground: oklch(0.2 0 0);
+  --color-sidebar-border: oklch(0.92 0.01 265);
+  --color-sidebar-ring: oklch(0.55 0.2 265);
+
+  /* Border Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.3s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Dark Mode Overrides */
+.dark {
+  --color-background: oklch(0.12 0.01 265);
+  --color-foreground: oklch(0.98 0 0);
+  --color-card: oklch(0.16 0.01 265);
+  --color-card-foreground: oklch(0.98 0 0);
+  --color-popover: oklch(0.16 0.01 265);
+  --color-popover-foreground: oklch(0.98 0 0);
+  --color-primary: oklch(0.7 0.18 265);
+  --color-primary-foreground: oklch(0.1 0 0);
+  --color-secondary: oklch(0.22 0.02 265);
+  --color-secondary-foreground: oklch(0.98 0 0);
+  --color-muted: oklch(0.22 0.01 265);
+  --color-muted-foreground: oklch(0.65 0 0);
+  --color-accent: oklch(0.25 0.02 265);
+  --color-accent-foreground: oklch(0.98 0 0);
+  --color-destructive: oklch(0.65 0.22 25);
+  --color-border: oklch(0.98 0 0 / 12%);
+  --color-input: oklch(0.98 0 0 / 15%);
+  --color-ring: oklch(0.7 0.18 265);
+}
+
+/* Utilities */
+@layer utilities {
+  .glass {
+    @apply bg-background/85 backdrop-blur-xl border border-white/20;
+  }
+}
+
+/* Base */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.02 265);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0.05 265);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.3 0.02 265);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.4 0.05 265);
+}
